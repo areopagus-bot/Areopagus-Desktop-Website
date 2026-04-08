@@ -44,6 +44,7 @@
         <ul role="list">
           <li><a href="#audience">Who It's For</a></li>
           <li><a href="#features">Features</a></li>
+          <li><a href="#updates">Updates</a></li>
           <li><a href="#download">Download</a></li>
           <li><a href="#contact">Contact</a></li>
         </ul>
@@ -77,6 +78,7 @@
   <div class="mobile-nav" id="mobileNav" aria-hidden="true">
     <a href="#audience" class="mobile-nav-link">Who It's For</a>
     <a href="#features" class="mobile-nav-link">Features</a>
+    <a href="#updates" class="mobile-nav-link">Updates</a>
     <a href="#download" class="mobile-nav-link">Download</a>
     <a href="#contact" class="mobile-nav-link">Contact</a>
   </div>
@@ -552,6 +554,29 @@ export default {
       </div>
     </section>
 
+    <!-- ========== UPDATES (Substack) ========== -->
+    <section id="updates" class="section updates">
+      <div class="container">
+        <p class="section-label fade-in">Updates</p>
+        <h2 class="section-title fade-in">What we've been building.</h2>
+        <p class="section-sub fade-in">
+          The latest from the Areopagus team — product updates, behind-the-scenes, and what's next.
+        </p>
+
+        <div class="updates-grid fade-in" id="updatesGrid">
+          <!-- Populated by JS from Substack RSS -->
+          <div class="updates-empty">
+            <p>Our first post is on the way. Follow along on Substack.</p>
+            <a href="https://projectareopagus.substack.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Subscribe on Substack</a>
+          </div>
+        </div>
+
+        <div class="updates-cta fade-in" id="updatesCta" style="display:none;">
+          <a href="https://projectareopagus.substack.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Read more on Substack &rarr;</a>
+        </div>
+      </div>
+    </section>
+
     <!-- ========== DOWNLOAD ========== -->
     <section id="download" class="section download">
       <div class="container">
@@ -909,6 +934,53 @@ export default {
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
     });
   });
+
+  // ---- Substack RSS Feed ----
+  (function(){
+    var SUBSTACK_URL = 'https://projectareopagus.substack.com';
+    var FEED_URL = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(SUBSTACK_URL + '/feed');
+    var grid = document.getElementById('updatesGrid');
+    var cta = document.getElementById('updatesCta');
+    if (!grid) return;
+
+    fetch(FEED_URL)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.items || data.items.length === 0) return;
+
+        // Clear the empty state
+        grid.innerHTML = '';
+        if (cta) cta.style.display = '';
+
+        // Show up to 3 latest posts
+        var posts = data.items.slice(0, 3);
+        posts.forEach(function(post) {
+          var date = new Date(post.pubDate);
+          var dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+          // Get excerpt from description (strip HTML, trim to ~120 chars)
+          var tmp = document.createElement('div');
+          tmp.innerHTML = post.description || '';
+          var excerpt = (tmp.textContent || tmp.innerText || '').trim();
+          if (excerpt.length > 140) excerpt = excerpt.substring(0, 137) + '...';
+
+          var card = document.createElement('a');
+          card.href = post.link;
+          card.target = '_blank';
+          card.rel = 'noopener noreferrer';
+          card.className = 'update-card';
+          card.innerHTML =
+            '<div class="update-card-date">' + dateStr + '</div>' +
+            '<h3 class="update-card-title">' + post.title + '</h3>' +
+            (excerpt ? '<p class="update-card-excerpt">' + excerpt + '</p>' : '') +
+            '<span class="update-card-link">Read on Substack &rarr;</span>';
+          grid.appendChild(card);
+        });
+      })
+      .catch(function() {
+        // Silently fail — empty state stays visible
+      });
+  })();
   </script>
 </body>
 </html>
